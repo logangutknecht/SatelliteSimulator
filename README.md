@@ -2,7 +2,7 @@
 
 A 3D satellite orbital simulation and visualization tool built with Python and PyQt5.
 
-![Satellite Simulator Screenshot](screenshots/simulator.png)
+<img width="1512" alt="image" src="https://github.com/user-attachments/assets/548ff6d5-7bcf-41cb-a867-18931a431623" />
 
 ## Overview
 
