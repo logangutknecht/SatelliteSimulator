@@ -96,13 +96,11 @@ UI Components:
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgements
 
 This simulator was ported from a C++/Qt implementation to Python/PyQt5 to enhance accessibility and extensibility.
+The original repository can be found here by [FlorentF9](https://github.com/FlorentF9/SatelliteSimulator/).
 
 ## Future Improvements
 
