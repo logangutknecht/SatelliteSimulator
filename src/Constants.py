@@ -26,7 +26,7 @@ class Constants:
     
     # Program constants
     programName = "Satellite Simulator beta 0.2"
-    autoPlay = False         # Start simulation automatically?
+    autoPlay = True         # Start simulation automatically?
     verbose = False          # Print position on stdout?
     writeLog = True          # Keep log file?
     defaultImgPath = "src/assets/earth_4k.jpg"  # Default planet texture
@@ -41,4 +41,3 @@ class Constants:
     maxTimeStep = 60.0       # Maximum simulation time step (s)
     maxSatA = 1.0e6
     minSatTp = 1.0e6
-    maxSatTp = 1.0e6
