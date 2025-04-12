@@ -275,6 +275,13 @@ class SatelliteWindow(QDialog):
             # Convert to orbit parameters and update the UI
             orbit = importer.convert_to_simulator_orbit(satellite, self.m_planet)
             
+            # Update the satellite's orbit with the imported parameters
+            self.m_sat.get_orbit().set_a(orbit.get_a())
+            self.m_sat.get_orbit().set_e(orbit.get_e())
+            self.m_sat.get_orbit().set_i(orbit.get_i())
+            self.m_sat.get_orbit().set_omega(orbit.get_omega())
+            self.m_sat.get_orbit().set_omega_small(orbit.get_omega_small())
+            
             # Update form fields with the imported data
             self.a_box.setValue(orbit.get_a())
             self.e_box.setValue(orbit.get_e())
@@ -284,6 +291,7 @@ class SatelliteWindow(QDialog):
             
             # Set satellite name from TLE if available
             self.sat_name_field.setText(satellite.name)
+            self.m_sat.set_name(satellite.name)
             
             QMessageBox.information(self, "Import Successful", 
                                 f"Successfully imported data for satellite {satellite.name}.")
