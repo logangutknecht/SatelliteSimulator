@@ -6,12 +6,12 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from PyQt5.QtOpenGL import QGLWidget
 
-from simulation_gl import SimulationGL
-from simulation import Simulation
-from gui_constants import GuiConstants
-from constants import Constants
-from track_ball_camera import TrackBallCamera
-from point_pol import PointPol
+from SimulationGL import SimulationGL
+from Simulation import Simulation
+from GuiConstants import GuiConstants
+from Constants import Constants
+from TrackBallCamera import TrackBallCamera
+from PointPol import PointPol
 import math
 
 class SimulationDisplay(SimulationGL):
@@ -82,8 +82,8 @@ class SimulationDisplay(SimulationGL):
     def initializeGL(self):
         """Initialize OpenGL settings"""
         self.load_texture(Constants.defaultImgPath, 0)
-        self.load_texture("textures/gold_texture.jpg", 1)
-        self.load_texture("textures/solar_panel_2.jpg", 2)
+        self.load_texture("assets/gold_texture.jpg", 1)
+        self.load_texture("assets/solar_panel_2.jpg", 2)
         
         glEnable(GL_TEXTURE_2D)
         glShadeModel(GL_SMOOTH)
