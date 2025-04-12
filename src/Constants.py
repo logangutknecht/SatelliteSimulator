@@ -25,11 +25,11 @@ class Constants:
     a_geo = 42164.2          # Geostationary orbit (km)
     
     # Program constants
-    programName = "Satellite Simulator 0.2"
+    programName = "Satellite Simulator beta 0.2"
     autoPlay = False         # Start simulation automatically?
     verbose = False          # Print position on stdout?
     writeLog = True          # Keep log file?
-    defaultImgPath = "assets/earth_4k.jpg"  # Default planet texture
+    defaultImgPath = "src/assets/earth_4k.jpg"  # Default planet texture
     defaultPlanetName = "Earth"
     minPlanetRadius = 0.1    # Minimal radius of a planet (km)
     maxPlanetRadius = 1.0e6  # Maximum radius of a planet (km)

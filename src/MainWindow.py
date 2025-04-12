@@ -1,21 +1,21 @@
 from PyQt5.QtWidgets import (QMainWindow, QAction, QMenu, QMessageBox, 
-                           QFileDialog, QStatusBar)
+                           QFileDialog, QStatusBar, QSizePolicy)
 from PyQt5.QtGui import QIcon, QCloseEvent, QResizeEvent
 from PyQt5.QtCore import QDateTime, pyqtSlot, Qt
 import os
 import sys
 from datetime import datetime
-from simulation_display import SimulationDisplay
-from GuiConstants import GuiConstants
-from Constants import Constants
-from ConfigureWindow import ConfigureWindow
-from SatelliteWindow import SatelliteWindow
-from Monitor import Monitor
-from Planet import Planet
-from Simulation import Simulation
-from orbit import Orbit
-from satellite import Satellite
-from propulsion import Propulsion
+from src.SimulationDisplay import SimulationDisplay
+from src.GuiConstants import GuiConstants
+from src.Constants import Constants
+from src.ConfigureWindow import ConfigureWindow
+from src.SatelliteWindow import SatelliteWindow
+from src.Monitor import Monitor
+from src.Planet import Planet
+from src.Simulation import Simulation
+from src.Orbit import Orbit
+from src.Satellite import Satellite
+from src.Propulsion import Propulsion
 
 class MainWindow(QMainWindow):
     """
@@ -270,8 +270,11 @@ class MainWindow(QMainWindow):
                 event.ignore()
                 return
             
-            del self.m_sim_display.sim()
-            self.m_sim_display.set_simulation(None)
+            # Clean up simulation
+            if self.m_sim_display and self.m_sim_display.sim():
+                self.m_sim_display.sim().set_play(False)
+                self.m_sim_display.set_simulation(None)
+                self.m_monitor.set_simulation(None)
     
     @pyqtSlot()
     def new_slot(self):
@@ -293,9 +296,11 @@ class MainWindow(QMainWindow):
                     # Quit creating a new simulation
                     return
                 
-                del self.m_sim_display.sim()
-                self.m_sim_display.set_simulation(None)
-                self.m_monitor.set_simulation(None)
+                # Clean up simulation
+                if self.m_sim_display and self.m_sim_display.sim():
+                    self.m_sim_display.sim().set_play(False)
+                    self.m_sim_display.set_simulation(None)
+                    self.m_monitor.set_simulation(None)
             
             # Allocate new simulation
             planet = Planet()
@@ -312,7 +317,7 @@ class MainWindow(QMainWindow):
                 
                 self.setWindowTitle(self.m_sim_display.sim().name)
                 self.m_sim_display.timer().setInterval(
-                    1000 * self.m_sim_display.sim().dt / self.m_sim_display.sim().speed
+                    int(1000 * self.m_sim_display.sim().dt / self.m_sim_display.sim().speed)
                 )
                 self.update_sat_menu()
             
@@ -340,9 +345,11 @@ class MainWindow(QMainWindow):
                     # Quit opening a simulation
                     return
                 
-                del self.m_sim_display.sim()
-                self.m_sim_display.set_simulation(None)
-                self.m_monitor.set_simulation(None)
+                # Clean up simulation
+                if self.m_sim_display and self.m_sim_display.sim():
+                    self.m_sim_display.sim().set_play(False)
+                    self.m_sim_display.set_simulation(None)
+                    self.m_monitor.set_simulation(None)
             
             file_path, _ = QFileDialog.getOpenFileName(
                 self,

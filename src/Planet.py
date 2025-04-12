@@ -1,5 +1,5 @@
 import math
-from Constants import Constants
+from src.Constants import Constants
 
 class Planet:
     """

@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
 from PyQt5.QtCore import QTimer, Qt, pyqtSlot
 from PyQt5.QtGui import QPalette, QColor, QKeyEvent
-from Simulation import Simulation
-from GuiConstants import GuiConstants
+from src.Simulation import Simulation
+from src.GuiConstants import GuiConstants
 import sys
 
 class Monitor(QWidget):

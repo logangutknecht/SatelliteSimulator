@@ -1,6 +1,6 @@
 import math
-from point import Point
-from point_cart import PointCart
+from src.Point import Point
+from src.PointCart import PointCart
 
 class PointPol(Point):
     """

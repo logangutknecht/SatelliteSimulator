@@ -1,3 +1,5 @@
 PyQt5>=5.15.0
 numpy>=1.20.0
-matplotlib>=3.4.0 
+matplotlib>=3.4.0
+PyOpenGL>=3.1.0
+PyOpenGL-accelerate>=3.1.0 

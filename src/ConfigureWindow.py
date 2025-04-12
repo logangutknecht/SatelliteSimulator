@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import (QDialog, QGridLayout, QFormLayout, QGroupBox,
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt, QObject, QEvent, pyqtSignal, pyqtSlot
 import os
-from Constants import Constants
-from Simulation import Simulation
+from src.Constants import Constants
+from src.Simulation import Simulation
 
 class ConfigureWindow(QDialog):
     """

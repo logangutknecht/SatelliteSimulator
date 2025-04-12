@@ -6,12 +6,12 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from PyQt5.QtOpenGL import QGLWidget
 
-from SimulationGL import SimulationGL
-from Simulation import Simulation
-from GuiConstants import GuiConstants
-from Constants import Constants
-from TrackBallCamera import TrackBallCamera
-from PointPol import PointPol
+from src.SimulationGL import SimulationGL
+from src.Simulation import Simulation
+from src.GuiConstants import GuiConstants
+from src.Constants import Constants
+from src.TrackBallCamera import TrackBallCamera
+from src.PointPol import PointPol
 import math
 
 class SimulationDisplay(SimulationGL):
@@ -41,28 +41,28 @@ class SimulationDisplay(SimulationGL):
             self.planet_texture_path = self.m_sim.get_planet().get_img_path()
             self.sim_Timer = QTimer(self)
             self.sim_Timer.timeout.connect(self.sim_update_slot)
-            self.sim_Timer.start(1000 * self.m_sim.dt / self.m_sim.speed)
+            self.sim_Timer.start(int(1000 * self.m_sim.dt / self.m_sim.speed))
             
             self.m_camera = TrackBallCamera()
             self.setCursor(QCursor(Qt.OpenHandCursor))
     
     def set_simulation(self, sim):
-        """
-        Set a new simulation object
-        
-        Args:
-            sim (Simulation): The simulation object
-        """
+        """Set the current simulation"""
         self.m_sim = sim
-        self.planet_texture_path = Constants.defaultImgPath
-        self.m_camera = None
-        
         if self.m_sim is not None:
-            self.planet_texture_path = self.m_sim.get_planet().get_img_path()
-            self.sim_Timer = QTimer(self)
-            self.sim_Timer.timeout.connect(self.sim_update_slot)
-            self.sim_Timer.start(1000 * self.m_sim.dt / self.m_sim.speed)
+            # Create timer if it doesn't exist
+            if not hasattr(self, 'sim_Timer') or self.sim_Timer is None:
+                self.sim_Timer = QTimer(self)
+                self.sim_Timer.timeout.connect(self.sim_update_slot)
             
+            # Start timer with new interval
+            self.sim_Timer.start(int(1000 * self.m_sim.dt / self.m_sim.speed))
+            
+            # Load planet texture
+            self.planet_texture_path = self.m_sim.get_planet().get_img_path()
+            self.load_texture(self.planet_texture_path, 0)
+            
+            # Initialize camera
             self.m_camera = TrackBallCamera()
             self.setCursor(QCursor(Qt.OpenHandCursor))
     
@@ -82,8 +82,8 @@ class SimulationDisplay(SimulationGL):
     def initializeGL(self):
         """Initialize OpenGL settings"""
         self.load_texture(Constants.defaultImgPath, 0)
-        self.load_texture("assets/gold_texture.jpg", 1)
-        self.load_texture("assets/solar_panel_2.jpg", 2)
+        self.load_texture("src/assets/gold_texture.jpg", 1)
+        self.load_texture("src/assets/solar_panel_2.jpg", 2)
         
         glEnable(GL_TEXTURE_2D)
         glShadeModel(GL_SMOOTH)
@@ -121,7 +121,13 @@ class SimulationDisplay(SimulationGL):
         """
         # Load image
         qim_temp_texture = QImage(path)
-        qim_texture = QGLWidget.convertToGLFormat(qim_temp_texture)
+        if qim_temp_texture.isNull():
+            print(f"Failed to load texture: {path}")
+            return
+            
+        # Convert to RGBA format and flip vertically
+        qim_texture = qim_temp_texture.convertToFormat(QImage.Format_RGBA8888)
+        qim_texture = qim_texture.mirrored(False, True)  # Flip vertically
         
         # Generate texture
         self.texture[i] = glGenTextures(1)
@@ -129,8 +135,8 @@ class SimulationDisplay(SimulationGL):
         
         # Set texture data and parameters
         glTexImage2D(
-            GL_TEXTURE_2D, 0, 3, qim_texture.width(), qim_texture.height(),
-            0, GL_RGBA, GL_UNSIGNED_BYTE, qim_texture.bits()
+            GL_TEXTURE_2D, 0, GL_RGBA, qim_texture.width(), qim_texture.height(),
+            0, GL_RGBA, GL_UNSIGNED_BYTE, qim_texture.bits().asstring(qim_texture.byteCount())
         )
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -451,7 +457,7 @@ class SimulationDisplay(SimulationGL):
                     )
                 else:
                     self.sim().set_speed(self.sim().speed * 1.5)
-                self.sim_Timer.setInterval(1000 * self.sim().dt / self.sim().speed)
+                self.sim_Timer.setInterval(int(1000 * self.sim().dt / self.sim().speed))
             elif event.key() == Qt.Key_S:
                 if self.sim().speed / 1.5 < self.sim().dt / Constants.maxTimeStep:
                     self.sim().set_speed(self.sim().dt / Constants.maxTimeStep)
@@ -464,7 +470,7 @@ class SimulationDisplay(SimulationGL):
                     )
                 else:
                     self.sim().set_speed(self.sim().speed / 1.5)
-                self.sim_Timer.setInterval(1000 * self.sim().dt / self.sim().speed)
+                self.sim_Timer.setInterval(int(1000 * self.sim().dt / self.sim().speed))
             elif event.key() == Qt.Key_V:
                 self.sim().toggle_verbose()
         

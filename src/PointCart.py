@@ -1,6 +1,6 @@
 import math
-from Point import Point
-from Constants import Constants
+from src.Point import Point
+from src.Constants import Constants
 
 class PointCart(Point):
     """

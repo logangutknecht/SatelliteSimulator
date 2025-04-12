@@ -3,9 +3,9 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QGroupBox, QFormLayout,
 from PyQt5.QtCore import pyqtSlot, QRegExp
 from PyQt5.QtGui import QRegExpValidator
 import math
-from Constants import Constants
-from Satellite import Satellite
-from Planet import Planet
+from src.Constants import Constants
+from src.Satellite import Satellite
+from src.Planet import Planet
 
 class SatelliteWindow(QDialog):
     """

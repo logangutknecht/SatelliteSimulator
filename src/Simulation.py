@@ -1,9 +1,9 @@
 import os
 import sys
 import datetime
-from constants import Constants
-from satellite import Satellite
-from planet import Planet
+from src.Constants import Constants
+from src.Satellite import Satellite
+from src.Planet import Planet
 
 class Simulation:
     """
