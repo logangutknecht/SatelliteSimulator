@@ -1,7 +1,7 @@
-from orbit import Orbit
-from planet import Planet
-from propulsion import Propulsion
-from point_pol import PointPol
+from Orbit import Orbit
+from Planet import Planet
+from Propulsion import Propulsion
+from PointPol import PointPol
 
 class Satellite:
     """
