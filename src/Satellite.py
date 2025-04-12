@@ -8,26 +8,24 @@ class Satellite:
     Represents a satellite object in the simulation
     """
     
-    def __init__(self, orb, planet, prop, name="Satellite", rx=0.0, ry=0.0, rz=0.0):
+    def __init__(self, orb, planet, prop, name=""):
         """
-        Initialize a new satellite
+        Initialize a satellite
         
         Args:
-            orb (Orbit): The satellite's orbit
+            orb (Orbit): The orbit of the satellite
             planet (Planet): The planet the satellite orbits
-            prop (Propulsion): The satellite's propulsion system
-            name (str, optional): Name of the satellite. Defaults to "Satellite".
-            rx (float, optional): Rotation around x axis. Defaults to 0.0.
-            ry (float, optional): Rotation around y axis. Defaults to 0.0.
-            rz (float, optional): Rotation around z axis. Defaults to 0.0.
+            prop (Propulsion): The propulsion system
+            name (str, optional): The name of the satellite. Defaults to "".
         """
-        self.m_orbit = Orbit(orb)  # Create a copy of the orbit
+        self.m_orbit = Orbit(planet, orb.get_a(), orb.get_e(), orb.get_i(), 
+                            orb.get_omega(), orb.get_omega_small(), orb.get_tp())
         self.m_planet = planet
         self.m_prop = prop
         self.m_name = name
-        self.m_rx = rx
-        self.m_ry = ry
-        self.m_rz = rz
+        self.m_rx = 0.0
+        self.m_ry = 0.0
+        self.m_rz = 0.0
     
     def update(self, dt):
         """

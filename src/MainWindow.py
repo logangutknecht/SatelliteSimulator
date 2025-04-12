@@ -169,13 +169,17 @@ class MainWindow(QMainWindow):
         if self.m_sim_display is not None and self.m_sim_display.sim() is not None:
             self.m_sim_display.sim().set_play(False)
             
-            # Allocate new satellite
-            sat = Satellite(
-                Orbit(self.m_sim_display.sim().get_planet(), 1.0, 0.0, 0.0),
-                self.m_sim_display.sim().get_planet(),
-                Propulsion()
-            )
-            sat_window = SatelliteWindow(True, sat, self.m_sim_display.sim().get_planet())
+            # Create initial orbit parameters
+            planet = self.m_sim_display.sim().get_planet()
+            a = planet.get_radius() * 2.0  # Initial semi-major axis
+            e = 0.0  # Initial eccentricity
+            i = 0.0  # Initial inclination
+            
+            # Create orbit and satellite
+            orbit = Orbit(planet, a, e, i)
+            sat = Satellite(orbit, planet, Propulsion())
+            
+            sat_window = SatelliteWindow(True, sat, planet)
             
             if sat_window.exec_():
                 # Check whether satellite with the same name exists, if yes rename it
