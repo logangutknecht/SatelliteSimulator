@@ -1,7 +1,3 @@
-# SatelliteSimulator
-A simple python desktop satellite orbit simulator
-
-
 # Satellite Simulator
 
 A 3D satellite orbital simulation and visualization tool built with Python and PyQt5.
