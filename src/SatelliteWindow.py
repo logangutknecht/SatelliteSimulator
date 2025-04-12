@@ -6,6 +6,7 @@ import math
 from src.Constants import Constants
 from src.Satellite import Satellite
 from src.Planet import Planet
+from src.NORAD.TLE_Importer import TLEImporter
 
 class SatelliteWindow(QDialog):
     """
@@ -62,6 +63,17 @@ class SatelliteWindow(QDialog):
         self.sat_form.addRow("Satellite name:", self.sat_name_field)
         self.import_button = QPushButton("Import satellite")
         self.sat_form.addWidget(self.import_button)
+
+
+        # NORAD ID field and import button
+        self.norad_id_field = QLineEdit()
+        self.import_from_norad_button = QPushButton("Import from NORAD ID")
+        self.sat_form.addRow("NORAD ID:", self.norad_id_field)
+        self.sat_form.addWidget(self.import_from_norad_button)
+        
+        # Connect NORAD button
+        self.import_from_norad_button.clicked.connect(self.import_from_norad_slot)
+    
         
         # Orbit section
         # Semi-major axis
@@ -242,3 +254,48 @@ class SatelliteWindow(QDialog):
         self.m_sat.set_rz(self.rz_box.value())
         
         self.done(QDialog.Accepted)
+
+    @pyqtSlot()
+    def import_from_norad_slot(self):
+        """Import satellite data from NORAD ID"""
+        norad_id = self.norad_id_field.text()
+        if not norad_id:
+            QMessageBox.warning(self, "Invalid NORAD ID", "Please enter a valid NORAD ID.")
+            return
+            
+        try:
+            importer = TLEImporter()
+            satellite = importer.fetch_satellite_by_norad_id(norad_id)
+            
+            if not satellite:
+                QMessageBox.warning(self, "Satellite Not Found", 
+                                f"Could not find satellite with NORAD ID {norad_id}.")
+                return
+                
+            # Convert to orbit parameters and update the UI
+            orbit = importer.convert_to_simulator_orbit(satellite, self.m_planet)
+            
+            # Update the satellite's orbit with the imported parameters
+            self.m_sat.get_orbit().set_a(orbit.get_a())
+            self.m_sat.get_orbit().set_e(orbit.get_e())
+            self.m_sat.get_orbit().set_i(orbit.get_i())
+            self.m_sat.get_orbit().set_omega(orbit.get_omega())
+            self.m_sat.get_orbit().set_omega_small(orbit.get_omega_small())
+            
+            # Update form fields with the imported data
+            self.a_box.setValue(orbit.get_a())
+            self.e_box.setValue(orbit.get_e())
+            self.i_box.setValue(orbit.get_i())
+            self.om_box.setValue(orbit.get_omega())
+            self.om_small_box.setValue(orbit.get_omega_small())
+            
+            # Set satellite name from TLE if available
+            self.sat_name_field.setText(satellite.name)
+            self.m_sat.set_name(satellite.name)
+            
+            QMessageBox.information(self, "Import Successful", 
+                                f"Successfully imported data for satellite {satellite.name}.")
+                                
+        except Exception as e:
+            QMessageBox.critical(self, "Import Error", 
+                            f"An error occurred while importing the satellite data: {str(e)}")

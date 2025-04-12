@@ -17,6 +17,9 @@ Satellite Simulator is an educational tool that allows users to create, visualiz
 - **Orbit Customization**: Set orbital elements (semi-major axis, eccentricity, inclination, etc.)
 - **Time Controls**: Adjust simulation speed and precision
 - **Save/Load**: Save and load simulation configurations
+- **Multiple satellite tracking**: Import satellite data from NORAD IDs using N2YO API
+- **Earth and satellite models**: Display Earth and satellite models in the simulation
+- **Time control**: Play/pause simulation, adjust speed
 
 ## Requirements
 
@@ -24,6 +27,9 @@ Satellite Simulator is an educational tool that allows users to create, visualiz
 - PyQt5
 - PyOpenGL
 - NumPy (optional for additional calculations)
+- matplotlib (for satellite model visualization)
+- skyfield (for satellite position calculations)
+- requests (for API communication)
 
 ## Installation
 
@@ -38,7 +44,12 @@ cd SatelliteSimulator
 pip install -r requirements.txt
 ```
 
-3. Run the simulator:
+3. Get an N2YO API key:
+   - Register at https://www.n2yo.com/api/
+   - Get your API key from your account
+   - Set the API key in the application (File -> Set N2YO API Key)
+
+4. Run the simulator:
 ```bash
 python main.py
 ```
@@ -70,6 +81,31 @@ python main.py
 1. Click on **Simulation → Configure**
 2. Adjust the time step and speed settings
 3. Click "Apply and reset simulation"
+
+### NORAD ID Tracking
+
+The simulator can import satellite data using NORAD IDs through the N2YO API:
+
+1. Get your N2YO API key:
+   - Register at https://www.n2yo.com/api/
+   - The free tier includes 1000 requests per hour
+
+2. Set your API key:
+   - Go to File -> Set N2YO API Key
+   - Enter your API key
+   - The key is stored securely in `~/.satellite_simulator/config.json`
+
+3. Import a satellite:
+   - Click "Add Satellite"
+   - Enter the NORAD ID
+   - The simulator will fetch the latest TLE data
+   - Configure additional parameters if needed
+
+## Configuration
+
+The simulator stores configuration in `~/.satellite_simulator/config.json`:
+- N2YO API key
+- Other settings (to be added)
 
 ## File Structure
 

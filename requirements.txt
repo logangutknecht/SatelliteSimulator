@@ -1,5 +1,7 @@
 PyQt5>=5.15.0
-numpy>=1.20.0
-matplotlib>=3.4.0
+numpy>=1.19.0
+matplotlib>=3.3.0
 PyOpenGL>=3.1.0
-PyOpenGL-accelerate>=3.1.0 
+PyOpenGL-accelerate>=3.1.0
+skyfield>=1.46
+requests>=2.31.0 

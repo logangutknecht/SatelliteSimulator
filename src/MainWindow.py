@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import (QMainWindow, QAction, QMenu, QMessageBox, 
-                           QFileDialog, QStatusBar, QSizePolicy)
+                           QFileDialog, QStatusBar, QSizePolicy, QMenuBar, QInputDialog)
 from PyQt5.QtGui import QIcon, QCloseEvent, QResizeEvent
 from PyQt5.QtCore import QDateTime, pyqtSlot, Qt
 import os
@@ -16,6 +16,7 @@ from src.Simulation import Simulation
 from src.Orbit import Orbit
 from src.Satellite import Satellite
 from src.Propulsion import Propulsion
+from src.config_manager import ConfigManager
 
 class MainWindow(QMainWindow):
     """
@@ -40,6 +41,10 @@ class MainWindow(QMainWindow):
         self.m_monitor = None
         self.action_toggle_play = None
         self.m_hovered_sat = ""
+        
+        # Initialize config manager
+        self.config_manager = ConfigManager()
+        self.config_manager.load_config()
         
         # Set up menus
         self._setup_menus()
@@ -82,6 +87,11 @@ class MainWindow(QMainWindow):
         action_quit = QAction("&Quit", self)
         self.menu_file.addAction(action_quit)
         action_quit.setShortcut("Ctrl+Q")
+        
+        # Add API key action
+        api_key_action = QAction("Set N2YO API Key", self)
+        api_key_action.triggered.connect(self.set_api_key)
+        self.menu_file.addAction(api_key_action)
         
         # Simulation menu
         self.action_toggle_play = QAction("", self)
@@ -656,3 +666,27 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).resizeEvent(event)
         if self.m_monitor:
             self.m_monitor.on_resize(event.size().width(), event.size().height())
+    
+    def set_api_key(self):
+        """Set the N2YO API key"""
+        # Get current API key
+        current_key = self.config_manager.get_api_key()
+        
+        # Show input dialog
+        api_key, ok = QInputDialog.getText(
+            self,
+            "Set N2YO API Key",
+            "Enter your N2YO API key:",
+            text=current_key
+        )
+        
+        if ok and api_key:
+            # Save the API key
+            self.config_manager.set_api_key(api_key)
+            
+            # Show success message
+            QMessageBox.information(
+                self,
+                "Success",
+                "N2YO API key has been set successfully."
+            )
