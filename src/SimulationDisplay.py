@@ -33,12 +33,14 @@ class SimulationDisplay(SimulationGL):
         
         self.m_sim = sim
         self.planet_texture_path = Constants.defaultImgPath
+        self.planet_night_texture_path = None
         self.m_camera = None
-        self.texture = [0, 0, 0]  # Texture IDs
+        self.texture = [0, 0, 0, 0]  # Texture IDs (day, night, satellite, solar panel)
         self.sim_Timer = None
         
         if self.m_sim is not None:
             self.planet_texture_path = self.m_sim.get_planet().get_img_path()
+            self.planet_night_texture_path = self.m_sim.get_planet().get_night_img_path()
             self.sim_Timer = QTimer(self)
             self.sim_Timer.timeout.connect(self.sim_update_slot)
             self.sim_Timer.start(int(1000 * self.m_sim.dt / self.m_sim.speed))
@@ -58,9 +60,12 @@ class SimulationDisplay(SimulationGL):
             # Start timer with new interval
             self.sim_Timer.start(int(1000 * self.m_sim.dt / self.m_sim.speed))
             
-            # Load planet texture
+            # Load planet textures
             self.planet_texture_path = self.m_sim.get_planet().get_img_path()
+            self.planet_night_texture_path = self.m_sim.get_planet().get_night_img_path()
             self.load_texture(self.planet_texture_path, 0)
+            if self.planet_night_texture_path:
+                self.load_texture(self.planet_night_texture_path, 1)
             
             # Initialize camera
             self.m_camera = TrackBallCamera()
@@ -82,8 +87,21 @@ class SimulationDisplay(SimulationGL):
     def initializeGL(self):
         """Initialize OpenGL settings"""
         self.load_texture(Constants.defaultImgPath, 0)
-        self.load_texture("src/assets/gold_texture.jpg", 1)
-        self.load_texture("src/assets/solar_panel_2.jpg", 2)
+        if self.planet_night_texture_path:
+            self.load_texture(self.planet_night_texture_path, 1)
+        self.load_texture("src/assets/gold_texture.jpg", 2)
+        self.load_texture("src/assets/solar_panel_2.jpg", 3)
+        
+        # Enable lighting
+        glEnable(GL_LIGHTING)
+        glEnable(GL_LIGHT0)
+        glEnable(GL_COLOR_MATERIAL)
+        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
+        
+        # Set up light properties
+        glLightfv(GL_LIGHT0, GL_AMBIENT, (0.2, 0.2, 0.2, 1.0))
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, (1.0, 1.0, 1.0, 1.0))
+        glLightfv(GL_LIGHT0, GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
         
         glEnable(GL_TEXTURE_2D)
         glShadeModel(GL_SMOOTH)
@@ -185,6 +203,14 @@ class SimulationDisplay(SimulationGL):
         if self.m_sim is not None:
             self.m_camera.look()
             
+            # Position the sun (light source)
+            sun_distance = 100.0  # Arbitrary distance for the sun
+            sun_angle = 360.0 * (math.fmod(self.m_sim.t, self.m_sim.get_planet().get_day()) 
+                               / self.m_sim.get_planet().get_day())
+            sun_x = sun_distance * math.cos(math.radians(sun_angle))
+            sun_y = sun_distance * math.sin(math.radians(sun_angle))
+            glLightfv(GL_LIGHT0, GL_POSITION, (sun_x, sun_y, 0.0, 1.0))
+            
             scale_factor = 25.0
             
             # Get maximum RA for window scaling
@@ -202,10 +228,15 @@ class SimulationDisplay(SimulationGL):
             # Get planet apparent size
             r = self.m_sim.get_planet().get_radius() * scale
             
-            # Load texture if it has changed
+            # Load textures if they have changed
             if self.planet_texture_path != self.m_sim.get_planet().get_img_path():
                 self.planet_texture_path = self.m_sim.get_planet().get_img_path()
                 self.load_texture(self.planet_texture_path, 0)
+            
+            if self.planet_night_texture_path != self.m_sim.get_planet().get_night_img_path():
+                self.planet_night_texture_path = self.m_sim.get_planet().get_night_img_path()
+                if self.planet_night_texture_path:
+                    self.load_texture(self.planet_night_texture_path, 1)
             
             # Draw axes
             glDisable(GL_TEXTURE_2D)
@@ -234,7 +265,30 @@ class SimulationDisplay(SimulationGL):
             glPushMatrix()
             params = gluNewQuadric()
             gluQuadricTexture(params, GL_TRUE)
-            glBindTexture(GL_TEXTURE_2D, self.texture[0])
+            
+            # Enable multi-texturing if night texture is available
+            if self.planet_night_texture_path:
+                glActiveTexture(GL_TEXTURE0)
+                glBindTexture(GL_TEXTURE_2D, self.texture[0])  # Day texture
+                glActiveTexture(GL_TEXTURE1)
+                glBindTexture(GL_TEXTURE_2D, self.texture[1])  # Night texture
+                
+                # Calculate day/night blend factor based on sun position
+                blend_factor = (math.sin(math.radians(sun_angle)) + 1.0) / 2.0
+                glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE)
+                glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE)
+                glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE0)
+                glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR)
+                glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE1)
+                glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR)
+                glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_CONSTANT)
+                glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_COLOR)
+                glTexEnvf(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE)
+                glTexEnvf(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE0)
+                glTexEnvf(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA)
+                glTexEnvf(GL_TEXTURE_ENV, GL_CONSTANT, blend_factor)
+            else:
+                glBindTexture(GL_TEXTURE_2D, self.texture[0])
             
             # Rotate to set north pole on top
             glRotatef(-90.0, 1.0, 0.0, 0.0)
@@ -328,7 +382,7 @@ class SimulationDisplay(SimulationGL):
                 glEnable(GL_TEXTURE_2D)
                 
                 # Draw satellite body
-                glBindTexture(GL_TEXTURE_2D, self.texture[1])
+                glBindTexture(GL_TEXTURE_2D, self.texture[2])
                 glBegin(GL_QUADS)
                 
                 # Front face
@@ -394,7 +448,7 @@ class SimulationDisplay(SimulationGL):
                 glEnd()
                 
                 # Draw solar panels
-                glBindTexture(GL_TEXTURE_2D, self.texture[2])
+                glBindTexture(GL_TEXTURE_2D, self.texture[3])
                 
                 # Left panel
                 glBegin(GL_QUADS)

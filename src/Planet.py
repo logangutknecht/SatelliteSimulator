@@ -8,7 +8,7 @@ class Planet:
     
     def __init__(self, mu=Constants.mu_earth, radius=Constants.r_earth, 
                  day=Constants.day_earth, name=Constants.defaultPlanetName,
-                 img_path=Constants.defaultImgPath):
+                 img_path=Constants.defaultImgPath, night_img_path=None):
         """
         Initialize a planet with physical parameters
         
@@ -17,12 +17,14 @@ class Planet:
             radius (float, optional): Planet radius (km). Defaults to Earth's radius.
             day (float, optional): Sidereal day duration (s). Defaults to Earth's day.
             name (str, optional): Planet name. Defaults to "Earth".
-            img_path (str, optional): Path to texture image. Defaults to Earth texture.
+            img_path (str, optional): Path to day texture image. Defaults to Earth texture.
+            night_img_path (str, optional): Path to night texture image. Defaults to None.
         """
         self.m_mu = mu
         self.m_radius = radius
         self.m_name = name
         self.m_img_path = img_path
+        self.m_night_img_path = night_img_path
         self.m_day = day
     
     def update(self, dt):
@@ -80,6 +82,15 @@ class Planet:
         """
         return self.m_img_path
     
+    def get_night_img_path(self):
+        """
+        Get the night texture image path
+        
+        Returns:
+            str: Path to night texture image
+        """
+        return self.m_night_img_path
+    
     def set_mu(self, mu):
         """
         Set the gravitational parameter
@@ -125,6 +136,15 @@ class Planet:
         """
         self.m_img_path = path
     
+    def set_night_img_path(self, path):
+        """
+        Set the night texture image path
+        
+        Args:
+            path (str): New path to night texture image
+        """
+        self.m_night_img_path = path
+    
     def a_geo(self):
         """
         Calculate the geostationary orbit radius
@@ -146,4 +166,5 @@ class Planet:
         output += f"Mu: {self.m_mu}\n"
         output += f"Day: {self.m_day}\n"
         output += f"ImgPath: {self.m_img_path}\n"
+        output += f"NightImgPath: {self.m_night_img_path}\n"
         return output
