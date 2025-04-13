@@ -350,32 +350,36 @@ class SimulationDisplay(SimulationGL):
                 glEnable(GL_TEXTURE_2D)
                 
                 # Rotate according to satellite attitude
-                angle1 = 180.0 / Constants.pi * self.m_sim.sat(i).get_ry()
-                angle2 = 180.0 / Constants.pi * self.m_sim.sat(i).get_rz()
-                angle3 = 180.0 / Constants.pi * self.m_sim.sat(i).get_rx()
+                # Apply rotations in order:
+                # 1. ry around Y-axis to point X towards nadir
+                # 2. rz around Z-axis to align with orbital plane
+                # 3. rx around X-axis to align Y with velocity
+                angle1 = 180.0 / Constants.pi * self.m_sim.sat(i).get_ry()  # Y rotation first
+                angle2 = 180.0 / Constants.pi * self.m_sim.sat(i).get_rz()  # Z rotation second
+                angle3 = 180.0 / Constants.pi * self.m_sim.sat(i).get_rx()  # X rotation last
                 
-                glRotatef(angle1, 1.0, 0.0, 0.0)
-                glRotatef(angle2, 0.0, 1.0, 0.0)
-                glRotatef(angle3, 0.0, 0.0, 1.0)
+                glRotatef(angle1, 0.0, 1.0, 0.0)  # Y rotation
+                glRotatef(angle2, 0.0, 0.0, 1.0)  # Z rotation
+                glRotatef(angle3, 1.0, 0.0, 0.0)  # X rotation
                 
                 # Draw satellite axes
                 glDisable(GL_TEXTURE_2D)
                 glBegin(GL_LINES)
                 
-                # Satellite X (light red)
+                # Satellite X (light red) - nadir direction
                 glColor3d(1.0, 0.5, 0.5)
-                glVertex3d(0.0, 0.0, 0.0)
-                glVertex3d(0.0, 0.0, 3.0 * s)
-                
-                # Satellite Y (light green)
-                glColor3d(0.5, 1.0, 0.5)
                 glVertex3d(0.0, 0.0, 0.0)
                 glVertex3d(3.0 * s, 0.0, 0.0)
                 
-                # Satellite Z (light blue)
-                glColor3d(0.5, 0.5, 1.0)
+                # Satellite Y (light green) - velocity vector
+                glColor3d(0.5, 1.0, 0.5)
                 glVertex3d(0.0, 0.0, 0.0)
                 glVertex3d(0.0, 3.0 * s, 0.0)
+                
+                # Satellite Z (light blue) - completes right-handed system
+                glColor3d(0.5, 0.5, 1.0)
+                glVertex3d(0.0, 0.0, 0.0)
+                glVertex3d(0.0, 0.0, 3.0 * s)
                 
                 glEnd()
                 glColor3d(1.0, 1.0, 1.0)
@@ -385,27 +389,27 @@ class SimulationDisplay(SimulationGL):
                 glBindTexture(GL_TEXTURE_2D, self.texture[2])
                 glBegin(GL_QUADS)
                 
-                # Front face
+                # Front face (X+, nadir direction)
                 glTexCoord2f(0.0, 0.0)
-                glVertex3f(-1.0 * s, -1.0 * s, s)
+                glVertex3f(s, -1.0 * s, -1.0 * s)
                 glTexCoord2f(s, 0.0)
-                glVertex3f(s, -1.0 * s, s)
+                glVertex3f(s, s, -1.0 * s)
                 glTexCoord2f(s, s)
                 glVertex3f(s, s, s)
                 glTexCoord2f(0.0, s)
-                glVertex3f(-1.0 * s, s, s)
+                glVertex3f(s, -1.0 * s, s)
                 
-                # Back face
+                # Back face (X-, anti-nadir)
                 glTexCoord2f(s, 0.0)
                 glVertex3f(-1.0 * s, -1.0 * s, -1.0 * s)
                 glTexCoord2f(s, s)
                 glVertex3f(-1.0 * s, s, -1.0 * s)
                 glTexCoord2f(0.0, s)
-                glVertex3f(s, s, -1.0 * s)
+                glVertex3f(-1.0 * s, s, s)
                 glTexCoord2f(0.0, 0.0)
-                glVertex3f(s, -1.0 * s, -1.0 * s)
+                glVertex3f(-1.0 * s, -1.0 * s, s)
                 
-                # Top face
+                # Top face (Y+, velocity direction)
                 glTexCoord2f(0.0, s)
                 glVertex3f(-1.0 * s, s, -1.0 * s)
                 glTexCoord2f(0.0, 0.0)
@@ -415,7 +419,7 @@ class SimulationDisplay(SimulationGL):
                 glTexCoord2f(s, s)
                 glVertex3f(s, s, -1.0 * s)
                 
-                # Bottom face
+                # Bottom face (Y-, anti-velocity)
                 glTexCoord2f(s, s)
                 glVertex3f(-1.0 * s, -1.0 * s, -1.0 * s)
                 glTexCoord2f(0.0, s)
@@ -425,23 +429,23 @@ class SimulationDisplay(SimulationGL):
                 glTexCoord2f(s, 0.0)
                 glVertex3f(-1.0 * s, -1.0 * s, s)
                 
-                # Right face
+                # Right face (Z+)
                 glTexCoord2f(s, 0.0)
-                glVertex3f(s, -1.0 * s, -1.0 * s)
+                glVertex3f(-1.0 * s, -1.0 * s, s)
                 glTexCoord2f(s, s)
-                glVertex3f(s, s, -1.0 * s)
+                glVertex3f(-1.0 * s, s, s)
                 glTexCoord2f(0.0, s)
                 glVertex3f(s, s, s)
                 glTexCoord2f(0.0, 0.0)
                 glVertex3f(s, -1.0 * s, s)
                 
-                # Left face
+                # Left face (Z-)
                 glTexCoord2f(0.0, 0.0)
                 glVertex3f(-1.0 * s, -1.0 * s, -1.0 * s)
                 glTexCoord2f(s, 0.0)
-                glVertex3f(-1.0 * s, -1.0 * s, s)
+                glVertex3f(s, -1.0 * s, -1.0 * s)
                 glTexCoord2f(s, s)
-                glVertex3f(-1.0 * s, s, s)
+                glVertex3f(s, s, -1.0 * s)
                 glTexCoord2f(0.0, s)
                 glVertex3f(-1.0 * s, s, -1.0 * s)
                 
@@ -450,7 +454,12 @@ class SimulationDisplay(SimulationGL):
                 # Draw solar panels
                 glBindTexture(GL_TEXTURE_2D, self.texture[3])
                 
-                # Left panel
+                # Rotate solar panels to align with orbital plane
+                glPushMatrix()
+                # Rotate 90 degrees around Z-axis to align with orbital plane
+                glRotatef(90.0, 0.0, 0.0, 1.0)
+                
+                # Left panel (Z-)
                 glBegin(GL_QUADS)
                 glTexCoord2f(0.0, 0.0)
                 glVertex3f(-5.0 * s, -0.8 * s, 0.0)
@@ -462,7 +471,7 @@ class SimulationDisplay(SimulationGL):
                 glVertex3f(-5.0 * s, 0.8 * s, 0.0)
                 glEnd()
                 
-                # Right panel
+                # Right panel (Z+)
                 glBegin(GL_QUADS)
                 glTexCoord2f(0.0, 0.0)
                 glVertex3f(1.2 * s, -0.8 * s, 0.0)
@@ -474,10 +483,12 @@ class SimulationDisplay(SimulationGL):
                 glVertex3f(1.2 * s, 0.8 * s, 0.0)
                 glEnd()
                 
+                glPopMatrix()  # Restore the previous transformation matrix
+                
                 # Rotate back to draw next satellite
-                glRotatef(-angle3, 0.0, 0.0, 1.0)
-                glRotatef(-angle2, 0.0, 1.0, 0.0)
-                glRotatef(-angle1, 1.0, 0.0, 0.0)
+                glRotatef(-angle3, 1.0, 0.0, 0.0)  # Undo X rotation
+                glRotatef(-angle2, 0.0, 0.0, 1.0)  # Undo Z rotation
+                glRotatef(-angle1, 0.0, 1.0, 0.0)  # Undo Y rotation
                 
                 # Translate back to draw next satellite
                 glTranslatef(-y, -z, -x)

@@ -2,6 +2,7 @@ from src.Orbit import Orbit
 from src.Planet import Planet
 from src.Propulsion import Propulsion
 from src.PointPol import PointPol
+import math
 
 class Satellite:
     """
@@ -38,6 +39,48 @@ class Satellite:
         self.m_orbit.update(dt)
         # Update satellite position on its orbit
         self.m_orbit.update_position(dt)
+        # Update orientation to point towards nadir
+        self._update_nadir_orientation()
+    
+    def _update_nadir_orientation(self):
+        """
+        Update the satellite's orientation:
+        - X-axis points to planet's origin (0,0,0)
+        - Y-axis and Z-axis follow from rotations
+        """
+        # Get current position in polar coordinates and convert to cartesian
+        pos = self.m_orbit.get_position_point()
+        x = pos.get_x() * math.sin(pos.get_theta()) * math.cos(pos.get_phi())
+        y = pos.get_x() * math.sin(pos.get_theta()) * math.sin(pos.get_phi())
+        z = pos.get_x() * math.cos(pos.get_theta())
+        
+        # Calculate the angle between position vector and +X axis
+        # We want this angle to be 180 degrees (pi radians) to point at origin
+        
+        # First handle the rotation in XY plane (around Z axis)
+        if x == 0 and y == 0:
+            # If directly above/below origin in Z, no Z rotation needed
+            self.m_rz = 0
+        else:
+            # Calculate angle from +X axis to position vector in XY plane
+            angle_from_x = math.atan2(y, x)
+            # To point at origin, rotate 180° from this angle
+            self.m_rz = angle_from_x + math.pi
+            # Normalize to [-pi, pi]
+            if self.m_rz > math.pi:
+                self.m_rz -= 2 * math.pi
+        
+        # Then handle the elevation angle (around Y axis)
+        r_xy = math.sqrt(x*x + y*y)  # Distance in XY plane
+        if r_xy == 0:
+            # If directly above/below, point straight down/up
+            self.m_ry = math.pi/2 if z > 0 else -math.pi/2
+        else:
+            # Calculate elevation angle from XY plane
+            self.m_ry = math.atan2(z, r_xy)
+        
+        # No roll rotation needed
+        self.m_rx = 0.0
     
     def reset(self):
         """Reset the satellite to its initial state"""
