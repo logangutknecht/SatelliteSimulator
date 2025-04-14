@@ -21,6 +21,7 @@ class SatelliteInfoPanel(QWidget):
         # Setup widget appearance
         palette = QPalette()
         palette.setColor(QPalette.Background, QColor(240, 240, 240))
+        palette.setColor(QPalette.WindowText, QColor(0, 0, 0))  # Set text color to black
         self.setAutoFillBackground(True)
         self.setPalette(palette)
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
@@ -34,6 +35,11 @@ class SatelliteInfoPanel(QWidget):
         self.orbit_group = QGroupBox("Orbital Parameters")
         self.attitude_group = QGroupBox("Attitude")
         
+        # Set text color for group box titles
+        self.general_group.setStyleSheet("QGroupBox { color: black; }")
+        self.orbit_group.setStyleSheet("QGroupBox { color: black; }")
+        self.attitude_group.setStyleSheet("QGroupBox { color: black; }")
+        
         # Create form layouts
         self.general_form = QFormLayout()
         self.orbit_form = QFormLayout()
@@ -41,7 +47,10 @@ class SatelliteInfoPanel(QWidget):
         
         # Add labels for each field
         self.name_label = QLabel("No satellite selected")
-        self.general_form.addRow("Name:", self.name_label)
+        self.name_label.setStyleSheet("QLabel { color: black; }")
+        name_field_label = QLabel("Name:")
+        name_field_label.setStyleSheet("QLabel { color: black; }")
+        self.general_form.addRow(name_field_label, self.name_label)
         
         # Orbital parameters
         self.semi_major_axis_label = QLabel("-")
@@ -51,21 +60,45 @@ class SatelliteInfoPanel(QWidget):
         self.right_ascension_label = QLabel("-")
         self.true_anomaly_label = QLabel("-")
         
-        self.orbit_form.addRow("Semi-major axis:", self.semi_major_axis_label)
-        self.orbit_form.addRow("Eccentricity:", self.eccentricity_label)
-        self.orbit_form.addRow("Inclination:", self.inclination_label)
-        self.orbit_form.addRow("Argument of perigee:", self.argument_of_perigee_label)
-        self.orbit_form.addRow("Right ascension:", self.right_ascension_label)
-        self.orbit_form.addRow("True anomaly:", self.true_anomaly_label)
+        # Set text color for all orbital parameter labels
+        for label in [self.semi_major_axis_label, self.eccentricity_label, 
+                     self.inclination_label, self.argument_of_perigee_label,
+                     self.right_ascension_label, self.true_anomaly_label]:
+            label.setStyleSheet("QLabel { color: black; }")
+        
+        # Add orbital parameter rows with black text labels
+        self.orbit_form.addRow(QLabel("Semi-major axis:"), self.semi_major_axis_label)
+        self.orbit_form.addRow(QLabel("Eccentricity:"), self.eccentricity_label)
+        self.orbit_form.addRow(QLabel("Inclination:"), self.inclination_label)
+        self.orbit_form.addRow(QLabel("Argument of perigee:"), self.argument_of_perigee_label)
+        self.orbit_form.addRow(QLabel("Right ascension:"), self.right_ascension_label)
+        self.orbit_form.addRow(QLabel("True anomaly:"), self.true_anomaly_label)
+        
+        # Set text color for row labels
+        for i in range(self.orbit_form.rowCount()):
+            label_item = self.orbit_form.itemAt(i, QFormLayout.LabelRole)
+            if label_item and label_item.widget():
+                label_item.widget().setStyleSheet("QLabel { color: black; }")
         
         # Attitude parameters
         self.rx_label = QLabel("-")
         self.ry_label = QLabel("-")
         self.rz_label = QLabel("-")
         
-        self.attitude_form.addRow("Rotation X:", self.rx_label)
-        self.attitude_form.addRow("Rotation Y:", self.ry_label)
-        self.attitude_form.addRow("Rotation Z:", self.rz_label)
+        # Set text color for all attitude labels
+        for label in [self.rx_label, self.ry_label, self.rz_label]:
+            label.setStyleSheet("QLabel { color: black; }")
+        
+        # Add attitude parameter rows with black text labels
+        self.attitude_form.addRow(QLabel("Rotation X:"), self.rx_label)
+        self.attitude_form.addRow(QLabel("Rotation Y:"), self.ry_label)
+        self.attitude_form.addRow(QLabel("Rotation Z:"), self.rz_label)
+        
+        # Set text color for row labels
+        for i in range(self.attitude_form.rowCount()):
+            label_item = self.attitude_form.itemAt(i, QFormLayout.LabelRole)
+            if label_item and label_item.widget():
+                label_item.widget().setStyleSheet("QLabel { color: black; }")
         
         # Set layouts for group boxes
         self.general_group.setLayout(self.general_form)
