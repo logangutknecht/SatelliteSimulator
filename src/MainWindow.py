@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import (QMainWindow, QAction, QMenu, QMessageBox, 
-                           QFileDialog, QStatusBar, QSizePolicy, QMenuBar, QInputDialog)
+                           QFileDialog, QStatusBar, QSizePolicy, QMenuBar, QInputDialog,
+                           QDockWidget)
 from PyQt5.QtGui import QIcon, QCloseEvent, QResizeEvent
 from PyQt5.QtCore import QDateTime, pyqtSlot, Qt
 import os
@@ -17,6 +18,7 @@ from src.Orbit import Orbit
 from src.Satellite import Satellite
 from src.Propulsion import Propulsion
 from src.config_manager import ConfigManager
+from src.SatelliteInfoPanel import SatelliteInfoPanel
 
 class MainWindow(QMainWindow):
     """
@@ -41,6 +43,7 @@ class MainWindow(QMainWindow):
         self.m_monitor = None
         self.action_toggle_play = None
         self.m_hovered_sat = ""
+        self.m_selected_sat = None
         
         # Initialize config manager
         self.config_manager = ConfigManager()
@@ -58,8 +61,18 @@ class MainWindow(QMainWindow):
         # Add simulation monitor
         self.m_monitor = Monitor(None, self.m_sim_display)
         
+        # Add satellite info panel
+        self.m_sat_info_panel = SatelliteInfoPanel()
+        self.m_sat_info_dock = QDockWidget("Satellite Information", self)
+        self.m_sat_info_dock.setWidget(self.m_sat_info_panel)
+        self.m_sat_info_dock.setAllowedAreas(Qt.RightDockWidgetArea)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.m_sat_info_dock)
+        
         # Make monitor invisible at the beginning
         self.m_monitor.setVisible(False)
+        
+        # Connect signals
+        self.m_sim_display.satellite_selected.connect(self.on_satellite_selected)
     
     def _setup_menus(self):
         """Set up the application menus and actions"""
@@ -690,3 +703,13 @@ class MainWindow(QMainWindow):
                 "Success",
                 "N2YO API key has been set successfully."
             )
+    
+    def on_satellite_selected(self, satellite):
+        """
+        Handle satellite selection from the simulation display
+        
+        Args:
+            satellite (Satellite): The selected satellite
+        """
+        self.m_selected_sat = satellite
+        self.m_sat_info_panel.update_satellite_info(satellite)
