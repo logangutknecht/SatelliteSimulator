@@ -101,20 +101,30 @@ class TLEImporter:
             v_mag = np.linalg.norm(v)
             a = 1.0 / (2.0 / r_mag - v_mag * v_mag / mu)
             
-            # Calculate inclination
+            # Calculate inclination - use direct value since we'll handle direction with Omega/omega
             i = np.arccos(h[2] / h_mag)
             
             # Calculate right ascension of ascending node
             n = np.cross([0, 0, 1], h)
             n_mag = np.linalg.norm(n)
-            Omega = np.arccos(n[0] / n_mag)
-            if n[1] < 0:
-                Omega = 2 * np.pi - Omega
+            if n_mag < 1e-10:  # Handle near-polar orbits
+                Omega = 0.0
+            else:
+                Omega = np.arccos(n[0] / n_mag)
+                if n[1] < 0:
+                    Omega = 2 * np.pi - Omega
+                # Add 180 degrees and subtract 60 degrees to align with Earth texture
+                Omega = (Omega + np.pi - np.pi/4 - np.pi/12) % (2 * np.pi)
             
             # Calculate argument of perigee
-            omega = np.arccos(np.dot(n, e_vec) / (n_mag * e))
-            if e_vec[2] < 0:
-                omega = 2 * np.pi - omega
+            if n_mag < 1e-10:  # Handle near-polar orbits
+                omega = np.arctan2(e_vec[1], e_vec[0])
+            else:
+                omega = np.arccos(np.dot(n, e_vec) / (n_mag * e))
+                if e_vec[2] < 0:
+                    omega = 2 * np.pi - omega
+                # Add 180 degrees to maintain correct perigee position
+                omega = (omega + np.pi) % (2 * np.pi)
             
             logging.info(f"Calculated orbital elements:")
             logging.info(f"a = {a} km")
