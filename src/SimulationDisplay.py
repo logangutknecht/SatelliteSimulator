@@ -1,10 +1,10 @@
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QMessageBox, QMenu
 from PyQt5.QtGui import QImage, QCursor
-from PyQt5.QtCore import QTimer, Qt, pyqtSlot
+from PyQt5.QtCore import QTimer, Qt, pyqtSlot, pyqtSignal
+from PyQt5.QtOpenGL import QGLWidget
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from PyQt5.QtOpenGL import QGLWidget
 
 from src.SimulationGL import SimulationGL
 from src.Simulation import Simulation
@@ -18,6 +18,9 @@ class SimulationDisplay(SimulationGL):
     """
     OpenGL widget for displaying the simulation in 3D
     """
+    
+    # Signal emitted when a satellite is selected
+    satellite_selected = pyqtSignal(object)
     
     def __init__(self, frames_per_second=GuiConstants.fps, parent=None, name=None, sim=None):
         """
@@ -34,9 +37,15 @@ class SimulationDisplay(SimulationGL):
         self.m_sim = sim
         self.planet_texture_path = Constants.defaultImgPath
         self.planet_night_texture_path = None
-        self.m_camera = None
         self.texture = [0, 0, 0, 0]  # Texture IDs (day, night, satellite, solar panel)
         self.sim_Timer = None
+        self.m_selected_sat = None
+        self.is_dragging = False
+        self.highlighted_sat = None  # Track highlighted satellite
+        
+        # Always initialize the camera
+        self.m_camera = TrackBallCamera()
+        self.setCursor(QCursor(Qt.ArrowCursor))
         
         if self.m_sim is not None:
             self.planet_texture_path = self.m_sim.get_planet().get_img_path()
@@ -44,9 +53,6 @@ class SimulationDisplay(SimulationGL):
             self.sim_Timer = QTimer(self)
             self.sim_Timer.timeout.connect(self.sim_update_slot)
             self.sim_Timer.start(int(1000 * self.m_sim.dt / self.m_sim.speed))
-            
-            self.m_camera = TrackBallCamera()
-            self.setCursor(QCursor(Qt.OpenHandCursor))
     
     def set_simulation(self, sim):
         """Set the current simulation"""
@@ -69,7 +75,7 @@ class SimulationDisplay(SimulationGL):
             
             # Initialize camera
             self.m_camera = TrackBallCamera()
-            self.setCursor(QCursor(Qt.OpenHandCursor))
+            self.setCursor(QCursor(Qt.ArrowCursor))
     
     def __del__(self):
         """Clean up resources"""
@@ -305,11 +311,16 @@ class SimulationDisplay(SimulationGL):
             
             # Draw each satellite
             for i in range(self.m_sim.nsat()):
+                sat = self.m_sim.sat(i)
+                
+                # Check if this satellite is highlighted
+                is_highlighted = (sat == self.highlighted_sat)
+                
                 # Satellite size, scaled
                 s = 300.0 * scale
                 
                 # Get position
-                pos = self.m_sim.sat(i).get_current_position()
+                pos = sat.get_current_position()
                 x = float(pos.get_x())
                 y = float(pos.get_y())
                 z = float(pos.get_z())
@@ -320,8 +331,59 @@ class SimulationDisplay(SimulationGL):
                 z *= scale
                 
                 # Draw orbit ellipse
-                self.draw_ellipse(self.m_sim.sat(i).get_orbit(), scale, i, self.m_sim.nsat())
-                glColor3d(1.0, 1.0, 1.0)
+                self.draw_ellipse(sat.get_orbit(), scale, i, self.m_sim.nsat())
+                
+                # Set color based on highlight status
+                if is_highlighted:
+                    glColor3d(1.0, 1.0, 0.0)  # Yellow highlight
+                    # Draw highlight outline
+                    glPushMatrix()
+                    glTranslatef(y, z, x)
+                    glScalef(1.2, 1.2, 1.2)  # Make highlight slightly larger
+                    
+                    # Draw wireframe box using GL_LINES
+                    glDisable(GL_TEXTURE_2D)
+                    glDisable(GL_LIGHTING)
+                    glLineWidth(2.0)  # Make lines thicker
+                    
+                    glBegin(GL_LINES)
+                    # Front face
+                    glVertex3f(-s, -s, s)
+                    glVertex3f(s, -s, s)
+                    glVertex3f(s, -s, s)
+                    glVertex3f(s, s, s)
+                    glVertex3f(s, s, s)
+                    glVertex3f(-s, s, s)
+                    glVertex3f(-s, s, s)
+                    glVertex3f(-s, -s, s)
+                    
+                    # Back face
+                    glVertex3f(-s, -s, -s)
+                    glVertex3f(s, -s, -s)
+                    glVertex3f(s, -s, -s)
+                    glVertex3f(s, s, -s)
+                    glVertex3f(s, s, -s)
+                    glVertex3f(-s, s, -s)
+                    glVertex3f(-s, s, -s)
+                    glVertex3f(-s, -s, -s)
+                    
+                    # Connecting lines
+                    glVertex3f(-s, -s, s)
+                    glVertex3f(-s, -s, -s)
+                    glVertex3f(s, -s, s)
+                    glVertex3f(s, -s, -s)
+                    glVertex3f(s, s, s)
+                    glVertex3f(s, s, -s)
+                    glVertex3f(-s, s, s)
+                    glVertex3f(-s, s, -s)
+                    glEnd()
+                    
+                    glLineWidth(1.0)  # Reset line width
+                    glEnable(GL_LIGHTING)
+                    glEnable(GL_TEXTURE_2D)
+                    glPopMatrix()
+                
+                glColor3d(1.0, 1.0, 1.0)  # Reset color
                 
                 # Translate to satellite position
                 glTranslatef(y, z, x)
@@ -531,33 +593,32 @@ class SimulationDisplay(SimulationGL):
         # Pass event to the parent class
         super(SimulationDisplay, self).keyPressEvent(event)
     
-    def mouseMoveEvent(self, event):
-        """
-        Handle mouse move events
-        
-        Args:
-            event (QMouseEvent): Mouse event
-        """
-        if self.sim() is not None:
-            self.m_camera.on_mouse_motion(event)
-        
-        # Pass event to the parent class
-        super(SimulationDisplay, self).mouseMoveEvent(event)
-    
     def mousePressEvent(self, event):
         """
         Handle mouse press events
         
         Args:
-            event (QMouseEvent): Mouse event
+            event (QMouseEvent): The mouse event
         """
-        if self.sim() is not None:
-            if event.button() == Qt.LeftButton:
-                self.setCursor(QCursor(Qt.ClosedHandCursor))
-                self.m_camera.on_mouse_press(event)
-        
-        # Pass event to the parent class
-        super(SimulationDisplay, self).mousePressEvent(event)
+        if event.button() == Qt.RightButton:
+            # Check if a satellite was clicked
+            sat = self._get_satellite_at_position(event.pos())
+            if sat is not None:
+                # Toggle highlight if clicking the same satellite
+                if self.highlighted_sat == sat:
+                    self.highlighted_sat = None
+                    self.m_selected_sat = None
+                    self.satellite_selected.emit(None)
+                else:
+                    self.highlighted_sat = sat
+                    self._show_satellite_info(sat)
+                self.update()  # Force a redraw
+                
+        elif event.button() == Qt.LeftButton:
+            # Start camera movement
+            self.is_dragging = True
+            self.setCursor(QCursor(Qt.ClosedHandCursor))
+            self.m_camera.on_mouse_press(event)
     
     def mouseReleaseEvent(self, event):
         """
@@ -566,13 +627,31 @@ class SimulationDisplay(SimulationGL):
         Args:
             event (QMouseEvent): Mouse event
         """
-        if self.sim() is not None:
-            if event.button() == Qt.LeftButton:
-                self.setCursor(QCursor(Qt.OpenHandCursor))
-                self.m_camera.on_mouse_release(event)
+        if event.button() == Qt.LeftButton and self.is_dragging:
+            self.is_dragging = False
+            self.setCursor(QCursor(Qt.ArrowCursor))
+            self.m_camera.on_mouse_release(event)
+    
+    def mouseMoveEvent(self, event):
+        """
+        Handle mouse move events
         
-        # Pass event to the parent class
-        super(SimulationDisplay, self).mouseReleaseEvent(event)
+        Args:
+            event (QMouseEvent): Mouse event
+        """
+        if self.is_dragging and event.buttons() & Qt.LeftButton:
+            self.m_camera.on_mouse_motion(event)
+    
+    def leaveEvent(self, event):
+        """
+        Handle mouse leave events
+        
+        Args:
+            event (QEvent): Leave event
+        """
+        if self.is_dragging:
+            self.is_dragging = False
+            self.setCursor(QCursor(Qt.ArrowCursor))
     
     def wheelEvent(self, event):
         """
@@ -586,3 +665,149 @@ class SimulationDisplay(SimulationGL):
         
         # Pass event to the parent class
         super(SimulationDisplay, self).wheelEvent(event)
+    
+    def _get_satellite_at_position(self, pos):
+        """
+        Get the satellite at the given screen position
+        
+        Args:
+            pos (QPoint): Screen position
+            
+        Returns:
+            Satellite: The satellite at the position, or None if no satellite was found
+        """
+        if self.m_sim is None:
+            return None
+            
+        # Get device pixel ratio to handle high DPI displays
+        device_pixel_ratio = self.devicePixelRatio()
+            
+        # Convert screen coordinates to OpenGL coordinates
+        mouse_x = pos.x() * device_pixel_ratio
+        mouse_y = pos.y() * device_pixel_ratio  # Don't flip y coordinate - we'll compare in screen space
+        
+        # Get the current matrices
+        viewport = glGetIntegerv(GL_VIEWPORT)
+        projection = glGetDoublev(GL_PROJECTION_MATRIX)
+        
+        # Save current matrix state
+        glPushMatrix()
+        
+        # Reset and apply camera transformation (exactly as in paintGL)
+        glLoadIdentity()
+        self.m_camera.look()
+        
+        # Get the scale factor (exactly as in paintGL)
+        scale_factor = 25.0
+        ra_max = 0.0
+        for i in range(self.m_sim.nsat()):
+            ra = self.m_sim.sat(i).get_orbit().get_ra()
+            if ra_max < ra:
+                ra_max = ra
+        if ra_max == 0.0:
+            ra_max = self.m_sim.get_planet().get_radius() * 3.0
+        scale = float(scale_factor / ra_max)
+        
+        # Check each satellite
+        closest_sat = None
+        min_distance = float('inf')
+        
+        for i in range(self.m_sim.nsat()):
+            sat = self.m_sim.sat(i)
+            pos = sat.get_current_position()
+            
+            # Get position and scale (exactly as in paintGL)
+            x_pos = float(pos.get_x()) * scale
+            y_pos = float(pos.get_y()) * scale
+            z_pos = float(pos.get_z()) * scale
+            
+            # Project satellite position to screen coordinates
+            # Note: We use (y, z, x) order to match the rendering in paintGL
+            screen_pos = gluProject(y_pos, z_pos, x_pos, 
+                                  glGetDoublev(GL_MODELVIEW_MATRIX),
+                                  projection, viewport)
+            
+            if screen_pos:
+                # Get screen coordinates (flip y to match mouse coordinates)
+                screen_x = screen_pos[0]
+                screen_y = viewport[3] - screen_pos[1]  # Flip y coordinate to match mouse coordinates
+                
+                # Calculate distance in screen space
+                dx = screen_x - mouse_x
+                dy = screen_y - mouse_y
+                distance = math.sqrt(dx * dx + dy * dy)
+                
+                # Print debug info
+                print(f"Satellite {sat.get_name()}: screen pos ({screen_x/device_pixel_ratio:.1f}, {screen_y/device_pixel_ratio:.1f}), "
+                      f"click pos ({mouse_x/device_pixel_ratio:.1f}, {mouse_y/device_pixel_ratio:.1f}), distance {distance/device_pixel_ratio:.1f}")
+                
+                # Use a reasonable threshold for picking (50 pixels * device_pixel_ratio)
+                if distance < 50 * device_pixel_ratio:
+                    if closest_sat is None or distance < min_distance:
+                        closest_sat = sat
+                        min_distance = distance
+        
+        # Restore matrix state
+        glPopMatrix()
+        
+        # Print selection result
+        if closest_sat:
+            print(f"Selected satellite: {closest_sat.get_name()} at distance {min_distance/device_pixel_ratio:.1f} pixels")
+        else:
+            print(f"No satellite selected. Click position: ({mouse_x/device_pixel_ratio:.1f}, {mouse_y/device_pixel_ratio:.1f})")
+        
+        return closest_sat
+    
+    def _show_satellite_info(self, satellite):
+        """
+        Show satellite information in the side panel
+        
+        Args:
+            satellite (Satellite): The satellite to show information for
+        """
+        self.m_selected_sat = satellite
+        self.satellite_selected.emit(satellite)
+    
+    def _configure_satellite(self, satellite):
+        """
+        Open configuration window for the satellite
+        
+        Args:
+            satellite (Satellite): The satellite to configure
+        """
+        if self.m_sim is not None:
+            self.m_sim.set_play(False)
+            sat_window = SatelliteWindow(False, satellite, self.m_sim.get_planet())
+            sat_window.exec_()
+    
+    def _remove_satellite(self, satellite):
+        """
+        Remove the satellite from the simulation
+        
+        Args:
+            satellite (Satellite): The satellite to remove
+        """
+        if self.m_sim is not None:
+            # Ask for confirmation
+            reply = QMessageBox.question(
+                self,
+                "Remove Satellite",
+                f"Are you sure you want to remove satellite '{satellite.get_name()}'?",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.No
+            )
+            
+            if reply == QMessageBox.Yes:
+                # Find and remove the satellite
+                for i in range(self.m_sim.nsat()):
+                    if self.m_sim.sat(i) == satellite:
+                        self.m_sim.remove_satellite(i)
+                        break
+                
+                # Clear selection if this was the selected satellite
+                if self.m_selected_sat == satellite:
+                    self.m_selected_sat = None
+                    self.satellite_selected.emit(None)
+    
+    def mouseDoubleClickEvent(self, event):
+        pass
