@@ -101,11 +101,6 @@ class MainWindow(QMainWindow):
         self.menu_file.addAction(action_quit)
         action_quit.setShortcut("Ctrl+Q")
         
-        # Add API key action
-        api_key_action = QAction("Set N2YO API Key", self)
-        api_key_action.triggered.connect(self.set_api_key)
-        self.menu_file.addAction(api_key_action)
-        
         # Simulation menu
         self.action_toggle_play = QAction("", self)
         self.menu_sim.addAction(self.action_toggle_play)
@@ -679,30 +674,6 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).resizeEvent(event)
         if self.m_monitor:
             self.m_monitor.on_resize(event.size().width(), event.size().height())
-    
-    def set_api_key(self):
-        """Set the N2YO API key"""
-        # Get current API key
-        current_key = self.config_manager.get_api_key()
-        
-        # Show input dialog
-        api_key, ok = QInputDialog.getText(
-            self,
-            "Set N2YO API Key",
-            "Enter your N2YO API key:",
-            text=current_key
-        )
-        
-        if ok and api_key:
-            # Save the API key
-            self.config_manager.set_api_key(api_key)
-            
-            # Show success message
-            QMessageBox.information(
-                self,
-                "Success",
-                "N2YO API key has been set successfully."
-            )
     
     def on_satellite_selected(self, satellite):
         """

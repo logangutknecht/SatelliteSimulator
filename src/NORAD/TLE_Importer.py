@@ -6,36 +6,22 @@ import numpy as np
 import logging
 import requests
 from io import StringIO
-from src.config_manager import ConfigManager
 import json
 
 class TLEImporter:
     def __init__(self):
         self.ts = load.timescale()
         logging.basicConfig(level=logging.INFO)
-        self.config_manager = ConfigManager()
-        self.config_manager.load_config()
-        self.api_key = self.config_manager.get_api_key()
-        if not self.api_key:
-            logging.error("N2YO API key not found. Please set it in the File menu.")
     
     def fetch_satellite_by_norad_id(self, norad_id):
-        """Fetch satellite TLE data from N2YO by NORAD ID"""
+        """Fetch satellite TLE data from keeptrack.space by NORAD ID"""
         try:
-            if not self.api_key:
-                logging.error("N2YO API key not set. Please set it in the File menu.")
-                return None
-            
-            # N2YO API endpoint for TLE data
-            url = f'https://api.n2yo.com/rest/v1/satellite/tle/{norad_id}'
-            params = {
-                'apiKey': self.api_key
-            }
+            # keeptrack.space API endpoint for satellite data
+            url = f'https://api.keeptrack.space/v2/sat/{norad_id}'
             
             logging.info(f"Fetching TLE data from: {url}")
-            logging.info(f"Using API key: {self.api_key[:4]}...{self.api_key[-4:]}")
             
-            response = requests.get(url, params=params)
+            response = requests.get(url)
             
             # Log the full response for debugging
             logging.info(f"Response status code: {response.status_code}")
@@ -48,34 +34,27 @@ class TLEImporter:
             data = response.json()
             logging.info(f"Parsed JSON response: {data}")
             
-            if not data.get('tle'):
-                logging.error("No TLE data in response")
-                if 'error' in data:
-                    logging.error(f"API Error: {data['error']}")
+            if "error" in data:
+                logging.error(f"API Error: {data['error']}")
                 return None
             
             # Extract TLE lines from the response
-            tle_lines = data['tle'].split('\r\n')
-            if len(tle_lines) != 2:
-                logging.error(f"Invalid TLE format. Expected 2 lines, got {len(tle_lines)}")
-                return None
-            
-            tle_line1 = tle_lines[0]
-            tle_line2 = tle_lines[1]
+            tle_line1 = data.get("TLE_LINE_1")
+            tle_line2 = data.get("TLE_LINE_2")
             
             if not tle_line1 or not tle_line2:
                 logging.error("Missing TLE lines in response")
                 return None
             
             # Create satellite object directly from TLE lines
-            satellite = EarthSatellite(tle_line1, tle_line2, data['info']['satname'], self.ts)
+            satellite = EarthSatellite(tle_line1, tle_line2, data.get("NAME", norad_id), self.ts)
             
-            if str(data['info']['satid']) == str(norad_id):
+            if str(data.get("NORAD_CAT_ID")) == str(norad_id):
                 logging.info(f"Successfully found satellite with NORAD ID {norad_id}")
                 logging.info(f"Satellite name: {satellite.name}")
                 return satellite
             else:
-                logging.error(f"Found satellite with different NORAD ID: {satellite.model.satnum}")
+                logging.error(f"Found satellite with different NORAD ID: {data.get('NORAD_CAT_ID')}")
                 return None
             
         except requests.exceptions.RequestException as e:
