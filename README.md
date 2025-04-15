@@ -17,7 +17,7 @@ Satellite Simulator is an educational tool that allows users to create, visualiz
 - **Orbit Customization**: Set orbital elements (semi-major axis, eccentricity, inclination, etc.)
 - **Time Controls**: Adjust simulation speed and precision
 - **Save/Load**: Save and load simulation configurations
-- **Multiple satellite tracking**: Import satellite data from NORAD IDs using N2YO API
+- **Multiple satellite tracking**: Import satellite data from NORAD IDs using free KeepTrack.space API
 - **Earth and satellite models**: Display Earth and satellite models in the simulation
 - **Time control**: Play/pause simulation, adjust speed
 
@@ -44,12 +44,7 @@ cd SatelliteSimulator
 pip install -r requirements.txt
 ```
 
-3. Get an N2YO API key:
-   - Register at https://www.n2yo.com/api/
-   - Get your API key from your account
-   - Set the API key in the application (File -> Set N2YO API Key)
-
-4. Run the simulator:
+3. Run the simulator:
 ```bash
 python main.py
 ```
@@ -84,49 +79,35 @@ python main.py
 
 ### NORAD ID Tracking
 
-The simulator can import satellite data using NORAD IDs through the N2YO API:
+The simulator can import satellite data using NORAD IDs through the free KeepTrack API:
 
-1. Get your N2YO API key:
-   - Register at https://www.n2yo.com/api/
-   - The free tier includes 1000 requests per hour
-
-2. Set your API key:
-   - Go to File -> Set N2YO API Key
-   - Enter your API key
-   - The key is stored securely in `~/.satellite_simulator/config.json`
-
-3. Import a satellite:
+1. Import a satellite:
    - Click "Add Satellite"
    - Enter the NORAD ID
    - The simulator will fetch the latest TLE data
    - Configure additional parameters if needed
 
-## Configuration
-
-The simulator stores configuration in `~/.satellite_simulator/config.json`:
-- N2YO API key
-- Other settings (to be added)
 
 ## File Structure
 
 - `main.py` - Main entry point for the application
-- `simulation.py` - Core simulation logic
-- `orbit.py` - Orbital calculations and mechanics
-- `planet.py` - Planet representation and properties
-- `satellite.py` - Satellite representation and state
-- `point.py` - Base class for points in 3D space
-- `point_pol.py` - Polar coordinate representation
-- `point_cart.py` - Cartesian coordinate representation
-- `propulsion.py` - Satellite propulsion (placeholder for future expansion)
+- `Simulation.py` - Core simulation logic
+- `Oribit.py` - Orbital calculations and mechanics
+- `Planet.py` - Planet representation and properties
+- `Satellite.py` - Satellite representation and state
+- `Point.py` - Base class for points in 3D space
+- `PointPol.py` - Polar coordinate representation
+- `PointCart.py` - Cartesian coordinate representation
+- `Propulsion.py` - Satellite propulsion (placeholder for future expansion)
 
 UI Components:
-- `main_window.py` - Main application window
-- `simulation_display.py` - OpenGL display for 3D visualization
-- `simulation_gl.py` - Base OpenGL widget
-- `configure_window.py` - Dialog for simulation configuration
-- `satellite_window.py` - Dialog for satellite configuration
-- `monitor.py` - Information display widget
-- `track_ball_camera.py` - Camera control system
+- `MainWindow.py` - Main application window
+- `SimulationDisplay.py` - OpenGL display for 3D visualization
+- `SimulationGL.py` - Base OpenGL widget
+- `ConfigureWindow.py` - Dialog for simulation configuration
+- `SatelliteWindow.py` - Dialog for satellite configuration
+- `Monitor.py` - Information display widget
+- `TrackBallCamera.py` - Camera control system
 
 ## Contributing
 
@@ -140,8 +121,9 @@ The original repository can be found here by [FlorentF9](https://github.com/Flor
 
 ## Future Improvements
 
-- Integration with real-world satellite data
+- Integration with real-world satellite info
 - Visualization of ground tracks
+- Simulate "Take Image" function for satellite
 - Effects of orbital perturbations
-- Advanced propulsion modeling
-- Multiple planet simulations
+- Advanced propulsion/GNC modeling
+- Multiple planet simulations, Sun shadows
